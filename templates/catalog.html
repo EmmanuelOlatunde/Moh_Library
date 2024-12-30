@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %} Book Catalog {% endblock %}
+{% block content %}
+
+<section class="catalog_section py-5">
+  <div class="container">
+    {% if user.is_authenticated %}
+      <h2 class="text-center mb-4">Welcome, {{ user.username }}</h2>
+    {% else %}
+      <h2 class="text-center mb-4">Welcome, Guest</h2>
+    {% endif %}
+
+    <!-- Search Bar -->
+<form action="{% url 'search' %}" method="post" class="mb-4">
+  {% csrf_token %}
+  <div class="input-group mx-auto" style="max-width: 500px;">
+    <input
+      type="text"
+      class="form-control"
+      placeholder="Search by title, author, or ISBN"
+      name="searchbar"
+    />
+    <button class="btn btn-primary" type="submit">Search</button>
+  </div>
+</form>
+
+
+    <!-- Book Grid -->
+    <div class="row gy-4">
+      {% for book in books %}
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 shadow-sm">
+            {% if book.cover_image %}
+              <img src="{{ book.cover_image.url }}" class="card-img-top" alt="{{ book.title }}" />
+            {% endif %}
+            <div class="card-body">
+              {% if user.is_authenticated %}
+                <form action="{% url 'toggle_bookmark' book.id %}" method="post" class="mb-2">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-link p-0 text-decoration-none">
+                    {% if book in user.bookmarked_books.all %}
+                      <span class="text-warning">&#9733;</span> <!-- Filled star -->
+                    {% else %}
+                      <span class="text-secondary">&#9734;</span> <!-- Empty star -->
+                    {% endif %}
+                  </button>
+                </form>
+              {% endif %}
+              <h3 class="card-title h5">{{ book.title }}</h3>
+              <p><strong>Author:</strong> {{ book.authors }}</p>
+              <p><strong>ISBN:</strong> {{ book.isbn }}</p>
+              <p><strong>Publication Date:</strong> {{ book.publish_date }}</p>
+              <p class="card-text">{{ book.description|truncatechars:100 }}</p>
+            </div>
+            <div class="card-footer d-flex justify-content-between">
+              {% if book.file %}
+                {% if user.is_authenticated %}
+                  <a href="{{ book.file.url }}" download class="btn btn-secondary btn-sm">Download</a>
+                {% else %}
+                  <a href="{% url 'login' %}" class="btn btn-secondary btn-sm">Download</a>
+                {% endif %}
+              {% endif %}
+              <a href="{% url 'load_book' book.id %}" class="btn btn-primary btn-sm">More</a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% endblock content %}

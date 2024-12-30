@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %} Dashboard {% endblock %}
+
+{% block content%}
+
+<section class="dashboard-section py-5">
+  <div class="container">
+    <!-- Header Section -->
+    <div class="text-center mb-5">
+      <h1 class="fw-bold">Welcome, {{ user.username }}</h1>
+      <p class="text-muted">Manage your books, check out, and review your borrowing history.</p>
+    </div>
+
+    <!-- Dashboard Cards -->
+    <div class="row gy-4">
+      <!-- Bookmarked Books Card -->
+      <div class="col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h3 class="card-title">Bookmarked Books</h3>
+            <p class="card-text">View the books you've bookmarked.</p>
+          </div>
+          <div class="card-footer text-center">
+            <a href="{% url 'bookmarked_books' %}" class="btn btn-primary w-100">View Bookmarked Books</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Account Settings Card -->
+      <div class="col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body">
+            <h3 class="card-title">Account Settings</h3>
+            <p class="card-text">
+              Manage your personal details, change your password, and set your preferences.
+            </p>
+          </div>
+          <div class="card-footer text-center">
+            <a href="{% url 'settings' %}" class="btn btn-primary w-100">Go to Settings</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock content %}

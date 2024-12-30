@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %} Settings {% endblock %}
+
+{% block content %}
+
+<section class="settings-section py-5">
+  <div class="container">
+    <!-- Header -->
+    <div class="text-center mb-4">
+      <h2 class="fw-bold">Account Settings</h2>
+      <p class="text-muted">Select an option to manage your account.</p>
+    </div>
+
+    <!-- Options -->
+    <div class="row gy-4">
+      <!-- Profile Update -->
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-body text-center">
+            <h3 class="card-title">Update Profile</h3>
+            <p>Modify your personal information and preferences.</p>
+            <a href="{% url 'profile_update' %}" class="btn btn-primary w-100">Update Profile</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Password Change -->
+      <div class="col-lg-6">
+        <div class="card shadow-sm">
+          <div class="card-body text-center">
+            <h3 class="card-title">Change Password</h3>
+            <p>Securely update your password to keep your account safe.</p>
+            <a href="{% url 'password_change' %}" class="btn btn-primary w-100">Change Password</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock content %}

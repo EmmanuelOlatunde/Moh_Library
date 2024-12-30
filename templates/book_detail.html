@@ -1,0 +1,28 @@
+
+{% extends "base.html" %}
+{% block title %} {{ book.title }}  {% endblock %}
+
+{% block content%}
+
+    <section class="book-detail-section">
+        <div class="container">
+            <div class="content">
+                {% if book.cover_image %}
+                <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="book-cover">
+                {% endif %}
+                <h3 class="book-title">{{ book.title }}</h3>
+                <p class="book-detail"><strong>Author:</strong> {{ book.authors }}</p>
+                <p class="book-detail"><strong>ISBN:</strong> {{ book.isbn }}</p>
+                <p class="book-detail"><strong>Publication Date:</strong> {{ book.publish_date }}</p>
+                <p class="book-detail"><strong>Summary:</strong> {{ book.summary }}</p>
+                <div class="button-group">
+                    {% if book.file %}
+                    <a href="{{ book.file.url }}" download class="btn btn-secondary">Download</a>
+                    {% endif %}
+                    <a href="{% url 'catalog' %}" class="btn btn-primary">Back to Catalog</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock content%}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %} Search {% endblock %}
+{% block content %}
+
+<section class="search_results_section py-5">
+  <div class="container">
+   <!-- Search Form -->
+<form action="{% url 'search' %}" method="post" class="mb-4">
+  {% csrf_token %}
+  <div class="input-group mx-auto" style="max-width: 500px;">
+    <input
+      type="text"
+      class="form-control"
+      placeholder="Search by title, author, or ISBN"
+      name="searchbar"
+      value="{{ searchbar|default:'' }}"
+    />
+    <button class="btn btn-primary" type="submit">Search</button>
+  </div>
+</form>
+
+
+    {% if searchbar %}
+      <h2 class="mb-4">Search Results for "{{ searchbar }}"</h2>
+
+      <!-- Results Grid -->
+      <div class="row gy-4">
+        {% for book in books %}
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+              {% if book.cover_image %}
+                <img src="{{ book.cover_image.url }}" class="card-img-top" alt="{{ book.title }}" />
+              {% endif %}
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title">{{ book.title }}</h5>
+                <p><strong>Author:</strong> {{ book.authors }}</p>
+                <p><strong>ISBN:</strong> {{ book.isbn }}</p>
+                <p class="card-text">{{ book.description|truncatechars:120 }}</p>
+                <p><strong>Publication Date:</strong> {{ book.publish_date }}</p>
+              </div>
+              <div class="card-footer d-flex justify-content-between align-items-center">
+                {% if book.file %}
+                  {% if user.is_authenticated %}
+                    <a href="{{ book.file.url }}" download class="btn btn-secondary btn-sm">Download</a>
+                  {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-secondary btn-sm">Download</a>
+                  {% endif %}
+                {% endif %}
+                <a href="{% url 'load_book' book.id %}" class="btn btn-primary btn-sm">More</a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if not books %}
+        <p class="text-danger mt-4">No results found for your search.</p>
+      {% endif %}
+    {% else %}
+      <h2 class="text-center text-muted mt-4">Hey! You forgot to search.</h2>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock content %}

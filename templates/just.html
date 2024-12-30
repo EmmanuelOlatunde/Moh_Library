@@ -1,0 +1,118 @@
+class GoogleBooksAPIView(View):
+    API_BASE_URL = "https://www.googleapis.com/books/v1/volumes"
+    
+    def get(self, request):
+        try:
+            # Get search query from request parameters
+            query = request.GET.get('q', '')
+            if not query:
+                return JsonResponse({'error': 'Search query is required'}, status=400)
+
+            # Make request to Google Books API
+            response = requests.get(
+                self.API_BASE_URL,
+                params={
+                    'q': query,
+                    'key': 'AIzaSyB0YlOmp3mXgl7kX9EACc7cgl14atmzDZw',
+                    'maxResults': 40  # Maximum allowed by the API
+                }
+            )
+            response.raise_for_status()
+            books_data = response.json()
+
+            saved_books = []
+            errors = []
+
+            for item in books_data.get('items', []):
+                try:
+                    volume_info = item.get('volumeInfo', {})
+                    
+                    # Extract ISBN
+                    isbn = None
+                    for identifier in volume_info.get('industryIdentifiers', []):
+                        if identifier.get('type') in ['ISBN_13', 'ISBN_10']:
+                            isbn = identifier.get('identifier')
+                            break
+
+                    # Skip if book already exists
+                    if isbn and Book.objects.filter(isbn=isbn).exists():
+                        continue
+
+                    # Process publish date
+                    publish_date_str = volume_info.get('publishedDate', '')
+                    try:
+                        # Handle different date formats
+                        if len(publish_date_str) == 4:  # Year only
+                            publish_date = datetime.strptime(publish_date_str, '%Y').date()
+                        elif len(publish_date_str) == 7:  # Year and month
+                            publish_date = datetime.strptime(publish_date_str, '%Y-%m').date()
+                        else:
+                            publish_date = datetime.strptime(publish_date_str, '%Y-%m-%d').date()
+                    except ValueError:
+                        publish_date = None
+
+                    # Create book instance
+                    book = Book(
+                        title=volume_info.get('title', 'Untitled'),
+                        authors=', '.join(volume_info.get('authors', ['Unknown'])),
+                        description=volume_info.get('description', '')[:150],  # Truncate to match model max_length
+                        publish_date=publish_date,
+                        isbn=isbn or 0,  # Default to 0 if no ISBN available
+                        publishers=volume_info.get('publisher', 'Unknown'),
+                        summary=volume_info.get('description')
+                    )
+
+                    # Handle cover image
+                    image_links = volume_info.get('imageLinks', {})
+                    if image_links and 'thumbnail' in image_links:
+                        image_url = image_links['thumbnail']
+                        image_response = requests.get(image_url)
+                        if image_response.status_code == 200:
+                            image_name = f"cover_{isbn or 'unknown'}.jpg"
+                            book.cover_image.save(
+                                image_name,
+                                ContentFile(image_response.content),
+                                save=False
+                            )
+
+                    # Handle PDF/EPUB file if available
+                    access_info = item.get('accessInfo', {})
+                    if access_info.get('pdf', {}).get('isAvailable'):
+                        pdf_link = access_info['pdf'].get('acsTokenLink')
+                        if pdf_link:
+                            pdf_response = requests.get(pdf_link)
+                            if pdf_response.status_code == 200:
+                                file_name = f"book_{isbn or 'unknown'}.pdf"
+                                book.file.save(
+                                    file_name,
+                                    ContentFile(pdf_response.content),
+                                    save=False
+                                )
+
+                    book.save()
+                    saved_books.append({
+                        'title': book.title,
+                        'authors': book.authors,
+                        'isbn': book.isbn
+                    })
+
+                except Exception as e:
+                    errors.append(f"Error processing book {volume_info.get('title', 'Unknown')}: {str(e)}")
+
+            return JsonResponse({
+                'message': f'Successfully processed {len(saved_books)} books',
+                'saved_books': saved_books,
+                'errors': errors
+            })
+
+        except requests.RequestException as e:
+            return JsonResponse({
+                'error': f'Error fetching data from Google Books API: {str(e)}'
+            }, status=500)
+        except Exception as e:
+            return JsonResponse({
+                'error': f'Unexpected error: {str(e)}'
+            }, status=500)
+
+    def post(self, request):
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
